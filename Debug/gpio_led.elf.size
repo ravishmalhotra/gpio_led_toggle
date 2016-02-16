@@ -1,0 +1,2 @@
+   text	   data	    bss	    dec	    hex	filename
+  32296	   1184	  22564	  56044	   daec	gpio_led.elf
