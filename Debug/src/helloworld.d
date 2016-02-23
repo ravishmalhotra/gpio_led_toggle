@@ -13,7 +13,11 @@ src/helloworld.d: ../src/helloworld.c ../src/platform.h \
  ../../gpio_led_bsp/ps7_cortexa9_0/include/xparameters.h \
  ../../gpio_led_bsp/ps7_cortexa9_0/include/xparameters_ps.h \
  ../../gpio_led_bsp/ps7_cortexa9_0/include/xparameters.h \
- ../../gpio_led_bsp/ps7_cortexa9_0/include/xstatus.h
+ ../../gpio_led_bsp/ps7_cortexa9_0/include/xstatus.h \
+ ../../gpio_led_bsp/ps7_cortexa9_0/include/xscugic.h \
+ ../../gpio_led_bsp/ps7_cortexa9_0/include/xscugic_hw.h \
+ ../../gpio_led_bsp/ps7_cortexa9_0/include/xil_exception.h \
+ ../../gpio_led_bsp/ps7_cortexa9_0/include/xil_exception.h
 
 ../src/platform.h:
 
@@ -46,3 +50,11 @@ src/helloworld.d: ../src/helloworld.c ../src/platform.h \
 ../../gpio_led_bsp/ps7_cortexa9_0/include/xparameters.h:
 
 ../../gpio_led_bsp/ps7_cortexa9_0/include/xstatus.h:
+
+../../gpio_led_bsp/ps7_cortexa9_0/include/xscugic.h:
+
+../../gpio_led_bsp/ps7_cortexa9_0/include/xscugic_hw.h:
+
+../../gpio_led_bsp/ps7_cortexa9_0/include/xil_exception.h:
+
+../../gpio_led_bsp/ps7_cortexa9_0/include/xil_exception.h:

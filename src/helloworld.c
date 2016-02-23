@@ -50,38 +50,157 @@
 #include "xgpiops.h"
 #include "xparameters.h"
 #include "xstatus.h"
+#include "xscugic.h"
+#include "xil_exception.h"
 
 #define LED_PIN 7
+#define SW_PIN 50
 
+#define SW_PIN2 51
+#define LED_DELAY 100000000
+
+#define GPIO_DEVICE_ID XPAR_PS7_GPIO_0_DEVICE_ID
+#define GIC_DEVICE_ID XPAR_SCUGIC_SINGLE_DEVICE_ID
+#define GPIO_INTERRUPT_ID XPS_GPIO_INT_ID
+
+
+//Global variables for keeping track of toggle and gpio config
+
+u8 toggle=0;
+
+
+//Function prototypes
+
+
+static void led_toggle (void *CallBackRef, int Bank, u32 Status);
 
 int main()
 {
 
-	int Status;
+	int gpio_init_status;
+	int interrupt_init_status;
+	u8 bank;
+    u32 int_status;
+    u8 pin_int_status;
+    u32 bank_int_enable_status;
 
-	XGpioPs_Config *XGpio_Config;
+	XGpioPs_Config *gpio_config;
+	XGpioPs gpio_inst;
 
-	XGpioPs XGpio_Inst;
+
+	XScuGic_Config *gic_config;
+    Xil_ExceptionInit();
+
+	XScuGic gic_inst;
+
+
+
 
 	init_platform();
 
+	 // Initialize GPIO
+	gpio_config=XGpioPs_LookupConfig(GPIO_DEVICE_ID);
 
-    XGpio_Config=XGpioPs_LookupConfig(XPAR_PS7_GPIO_0_DEVICE_ID);  // Initialize GPIO
 
-    Status=XGpioPs_CfgInitialize(&XGpio_Inst, XGpio_Config,XGpio_Config->BaseAddr);
+	//Initialise GPIO instant
+	gpio_init_status=XGpioPs_CfgInitialize(&gpio_inst, gpio_config,gpio_config->BaseAddr);
 
-    if (Status != XST_SUCCESS) {
-
-    xil_printf("GPIO could not be configured appropriately");
-
+    if (gpio_init_status != XST_SUCCESS) {
+        xil_printf("GPIO could not be configured appropriately");
     }
 
-    XGpioPs_SetDirectionPin(&XGpio_Inst, LED_PIN, 1); //Set Direction High
 
-    XGpioPs_SetOutputEnablePin(&XGpio_Inst,LED_PIN,1);
 
-    XGpioPs_WritePin(&XGpio_Inst,LED_PIN,1);
 
+    //Set LED_PIN as output
+    XGpioPs_SetDirectionPin(&gpio_inst, LED_PIN, 1);
+    XGpioPs_SetOutputEnablePin(&gpio_inst,LED_PIN, 1);
+    XGpioPs_WritePin(&gpio_inst, LED_PIN, 0);
+
+
+    //Set SW_PIN as input
+   XGpioPs_SetDirectionPin(&gpio_inst, SW_PIN, 0);
+
+    //XGpioPs_SetDirection(&gpio_inst, BANK, 0);
+
+
+
+
+
+
+    gic_config= XScuGic_LookupConfig(GIC_DEVICE_ID);
+    interrupt_init_status= XScuGic_CfgInitialize(&gic_inst, gic_config,gic_config->CpuBaseAddress);
+
+
+    if (interrupt_init_status != XST_SUCCESS) {
+          xil_printf("GPIO could not be configured appropriately");
+      }
+
+
+   //Initialize Interrupts for gpio
+
+
+
+	//Connect the GIC to the exception system
+	Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,(Xil_InterruptHandler)XScuGic_InterruptHandler,(void *)&gic_inst);
+
+
+	//Connect the GPIO interrupt to the GIC
+	XScuGic_Connect(&gic_inst, GPIO_INTERRUPT_ID,(Xil_InterruptHandler)XGpioPs_IntrHandler, (void *) &gpio_inst);
+
+
+	//Define Interrupt source as rising edge on SW pin MIO51
+    XGpioPs_SetIntrTypePin(&gpio_inst, SW_PIN,  XGPIOPS_IRQ_TYPE_EDGE_RISING);
+
+	//Set the GPIO callback function
+	XGpioPs_SetCallbackHandler(&gpio_inst, (void *)&gpio_inst, led_toggle);
+
+
+  	//Find registers with Interrupt flag high. Acknowledge those interrupts
+
+	XGpioPs_IntrClearPin(&gpio_inst, SW_PIN);
+   	XGpioPs_IntrEnablePin(&gpio_inst, SW_PIN);
+
+  // 	pin_int_status=XGpioPs_IntrGetEnabledPin(&gpio_inst, SW_PIN);
+   //	bank_int_enable_status=XGpioPs_IntrGetEnabled(&gpio_inst, 1);
+   	//int_status=XGpioPs_IntrGetStatus(&gpio_inst, 1);
+
+
+     //Enable the GPIO interrup
+   	XScuGic_Enable(&gic_inst, GPIO_INTERRUPT_ID);
+   	printf("GIC enabled \n\r");
+
+
+   	//Enable Global interrupts
+    Xil_ExceptionEnableMask(XIL_EXCEPTION_IRQ);
+    printf("Global Interrupt Set Up\n\r");
+
+   while (1) {
+
+
+   }
 
     return 0;
 }
+
+
+//LED blink function
+
+static void led_toggle (void *CallBackRef, int Bank, u32 Status) {
+
+	u32 delay;
+
+	XGpioPs *gpio_inst = (XGpioPs *)CallBackRef;
+
+	xil_printf("GpioPs Handler running… Bank: %d | Status: %x \r\n", Bank,Status);
+
+
+
+	toggle = !toggle;
+	XGpioPs_WritePin(gpio_inst, LED_PIN,toggle);
+
+
+
+}
+
+
