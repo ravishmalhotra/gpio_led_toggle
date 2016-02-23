@@ -1,4 +1,4 @@
-src/helloworld.d: ../src/helloworld.c ../src/platform.h \
+src/led_toggle.d: ../src/led_toggle.c ../src/platform.h \
  ../src/platform_config.h \
  ../../gpio_led_bsp/ps7_cortexa9_0/include/xgpiops.h \
  ../../gpio_led_bsp/ps7_cortexa9_0/include/xstatus.h \

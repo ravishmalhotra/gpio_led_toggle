@@ -7,18 +7,15 @@ LD_SRCS += \
 ../src/lscript.ld 
 
 C_SRCS += \
-../src/gpio_control.c \
-../src/helloworld.c \
+../src/led_toggle.c \
 ../src/platform.c 
 
 OBJS += \
-./src/gpio_control.o \
-./src/helloworld.o \
+./src/led_toggle.o \
 ./src/platform.o 
 
 C_DEPS += \
-./src/gpio_control.d \
-./src/helloworld.d \
+./src/led_toggle.d \
 ./src/platform.d 
 
 

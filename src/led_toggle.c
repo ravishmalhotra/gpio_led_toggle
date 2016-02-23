@@ -31,7 +31,11 @@
 ******************************************************************************/
 
 /*
- * helloworld.c: simple test application
+ * ledtoggle.c: simple test application for the Zybo board MIO pins
+ * and the interrupt system.
+ *
+ * The application toggles the LED (MIO 7) on every press of the
+ * pushbutton BTN4
  *
  * This application configures UART 16550 to baud rate 9600.
  * PS7 UART (Zynq) is not initialized by this application, since
@@ -56,33 +60,28 @@
 #define LED_PIN 7
 #define SW_PIN 50
 
-#define SW_PIN2 51
-#define LED_DELAY 100000000
 
 #define GPIO_DEVICE_ID XPAR_PS7_GPIO_0_DEVICE_ID
 #define GIC_DEVICE_ID XPAR_SCUGIC_SINGLE_DEVICE_ID
 #define GPIO_INTERRUPT_ID XPS_GPIO_INT_ID
 
 
-//Global variables for keeping track of toggle and gpio config
+//Global variables for keeping track of toggle
 
 u8 toggle=0;
 
 
 //Function prototypes
-
-
 static void led_toggle (void *CallBackRef, int Bank, u32 Status);
 
+
+// Main
 int main()
 {
 
 	int gpio_init_status;
 	int interrupt_init_status;
-	u8 bank;
-    u32 int_status;
-    u8 pin_int_status;
-    u32 bank_int_enable_status;
+
 
 	XGpioPs_Config *gpio_config;
 	XGpioPs gpio_inst;
@@ -92,9 +91,6 @@ int main()
     Xil_ExceptionInit();
 
 	XScuGic gic_inst;
-
-
-
 
 	init_platform();
 
@@ -121,24 +117,19 @@ int main()
     //Set SW_PIN as input
    XGpioPs_SetDirectionPin(&gpio_inst, SW_PIN, 0);
 
-    //XGpioPs_SetDirection(&gpio_inst, BANK, 0);
-
-
-
-
 
 
     gic_config= XScuGic_LookupConfig(GIC_DEVICE_ID);
     interrupt_init_status= XScuGic_CfgInitialize(&gic_inst, gic_config,gic_config->CpuBaseAddress);
 
 
-    if (interrupt_init_status != XST_SUCCESS) {
+    if (interrupt_init_status != XST_SUCCESS)
+      {
           xil_printf("GPIO could not be configured appropriately");
       }
 
 
    //Initialize Interrupts for gpio
-
 
 
 	//Connect the GIC to the exception system
@@ -161,9 +152,6 @@ int main()
 	XGpioPs_IntrClearPin(&gpio_inst, SW_PIN);
    	XGpioPs_IntrEnablePin(&gpio_inst, SW_PIN);
 
-  // 	pin_int_status=XGpioPs_IntrGetEnabledPin(&gpio_inst, SW_PIN);
-   //	bank_int_enable_status=XGpioPs_IntrGetEnabled(&gpio_inst, 1);
-   	//int_status=XGpioPs_IntrGetStatus(&gpio_inst, 1);
 
 
      //Enable the GPIO interrup
@@ -188,17 +176,13 @@ int main()
 
 static void led_toggle (void *CallBackRef, int Bank, u32 Status) {
 
-	u32 delay;
 
 	XGpioPs *gpio_inst = (XGpioPs *)CallBackRef;
 
 	xil_printf("GpioPs Handler running… Bank: %d | Status: %x \r\n", Bank,Status);
 
-
-
 	toggle = !toggle;
 	XGpioPs_WritePin(gpio_inst, LED_PIN,toggle);
-
 
 
 }
